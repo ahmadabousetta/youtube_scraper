@@ -15,7 +15,7 @@ Installation instructions and sample scripts are in README.md file.
 """
 # -----------------------------------------------------------------------------------------
 
-# import required libraries.
+# Import required libraries.
 
 import pandas as pd
 import os
@@ -23,26 +23,65 @@ import googleapiclient.discovery
 import googleapiclient.errors
 # -----------------------------------------------------------------------------------------
 
+# Adjust Pandas display options.
 
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
 # -----------------------------------------------------------------------------------------
 
+# Prepare API connection using API_key
+# The module doesn't use OAuth
 
 api_service_name = "youtube"
 api_version = "v3"
 
-with open("key.txt", "r") as f:
+with open("API_key.txt", "r") as f:
     API_key = f.read()
 
 youtube = googleapiclient.discovery.build(
         api_service_name, api_version, developerKey=API_key)
 # -----------------------------------------------------------------------------------------
 
+def search(query=None, channel_id=None, order_by='relevance', date_start="1970-01-01T00:00:00Z",
+           date_end=None, required_results_count=10, scope="video,channel,playlist", 
+           region_code=None, language=None, safe_search='moderate'):
+    
+'''
+Perform a Youtube search and return the search results in an organized Pandas DataFrame.
 
+The search offer the advanced search options available at Youtube.
+https://developers.google.com/youtube/v3/docs/search/list
 
-def search(query=None, channel_id=None, order_by='relevance', date_start="1970-01-01T00:00:00Z", date_end=None, required_results_count=10, scope="video,channel,playlist"):
-
+Parameters
+----------%s
+query : string
+    Search query. The text you put in the search toolbar..
+channel_id : string, default None
+    Unique Youtube channel id in case you want to filter your search to a certain channel.
+    Channel id is the last part of youtube channel url address.
+    www.youtube.com/channel/UCcIgGcUE-nb1tYKya3Qtp0Q channel id is 'UCcIgGcUE-nb1tYKya3Qtp0Q'
+order_by :  {'date', 'rating', 'title', 'viewCount', 'relevance'}, default 'relevance'
+    How the search results are ordered in output.
+date_start : timedate
+    Earliest search result, default 1970-01-01
+date_end : timedate
+    Latest search result, default current datetime
+required_results_count : int
+    Count of search results, default 10.
+    Use this feature wisely to avoid reaching daily quota limits.
+scope : str
+    Searching scope. 'video', 'channel' or 'playlist', default "video,channel,playlist".
+region_code : str
+    ISO 3166-1 alpha-2 country code.
+    Search from a certain region, default None .
+    use code like 'eg' for Egypt and 'sg' for Singapore.
+language: str
+    ISO 639-1 two-letter language code. However, you should use the values zh-Hans for simplified Chinese and zh-Hant for traditional Chinese.
+    preferred results language, default None.
+    Use code like 'en' for English.
+safe_search: {'moderate', 'none', 'strict'}, default 'moderate'
+    Safe search filter.
+'''
     search_results_items = []
     page_token = None
 
@@ -59,9 +98,9 @@ def search(query=None, channel_id=None, order_by='relevance', date_start="1970-0
             publishedAfter=date_start,
             publishedBefore=date_end,
             q=query,
-            regionCode="sg",
-            relevanceLanguage="en",
-            safeSearch="moderate",
+            regionCode=region_code,
+            relevanceLanguage=language,
+            safeSearch=safe_search,
             type=scope,
             videoDefinition="any",
             videoDuration="any"
@@ -152,7 +191,7 @@ def get_channel_data(channel_id):
     df['subscribers'] = df.statistics.apply(lambda x: x['subscriberCount'])
     df['video_count'] = df.statistics.apply(lambda x: x['videoCount'])
     df['thumbnails'] = df.snippet.apply(lambda x: x['thumbnails'])
-    df['custom_url'] = df.snippet.apply(lambda x: x['customUrl'])
+    df['custom_url'] = df.snippet.apply(lambda x: x.get('customUrl'))
 
 
     df = df.drop(columns=['kind', 'snippet', 'statistics'])
