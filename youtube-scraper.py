@@ -10,7 +10,7 @@ The scraped data is imported into a Pandas dataframe.
 The module is a soft wrapper for Youtube data api.
 https://developers.google.com/youtube/v3
 
-Installation instructions and sample scripts are in README.md file.
+Installation instructions are in README.md file.
 
 """
 # -----------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def search(query=None, channel_id=None, order_by='relevance', date_start="1970-0
     Parameters
     ----------%s
     query : string
-        Search query. The text you put in the search toolbar..
+        Search query. The text you put in the search toolbar.
     channel_id : string, default None
         Unique Youtube channel id in case you want to filter your search to a certain channel.
         Channel id is the last part of youtube channel url address.
@@ -81,8 +81,11 @@ def search(query=None, channel_id=None, order_by='relevance', date_start="1970-0
         Use code like 'en' for English.
     safe_search: {'moderate', 'none', 'strict'}, default 'moderate'
         Safe search filter.
+
+    Returns: Pandas DataFrame with search results.
     """
-    
+
+    # the api returns only 50 search results. so we fill this list 50 by 50.
     search_results_items = []
     page_token = None
 
@@ -143,6 +146,18 @@ def search(query=None, channel_id=None, order_by='relevance', date_start="1970-0
 
 def get_video_data(video_id):
 
+    '''
+    A function that returns all meta data of a specific video.
+
+    Parameters
+    ----------%s
+    video_id : int
+        A unique identifier of every video on youtube.
+        It's the last part of the video url.
+
+    Returns : Pandas DataFrame containing video meta data.
+    '''
+
     request = youtube.videos().list(
         part="snippet,contentDetails,statistics",
         id=video_id
@@ -170,12 +185,42 @@ def get_video_data(video_id):
 # -----------------------------------------------------------------------------------------
 
 
-def get_channel_videos(channel_id, since="1970-01-01T00:00:00Z", to_date=None, results_count=100):
-    return search(query=None, channel_id=channel_id, order_by='date', date_start=since, date_end=to_date, required_results_count=results_count, scope="video")
+def get_channel_videos(channel_id, since="1970-01-01T00:00:00Z", to_date=None, order_by='date', results_count=100):
+
+    '''
+    A function that returns a list of videos in a specific channel id.
+
+    Parameters
+    ----------%s
+    channel_id : int
+        The channel we want to scrape.
+    since: datetime
+        Earliest search result.
+    to_date: datetime
+        Latest search result.
+    order_by :  {'date', 'rating', 'title', 'viewCount', 'relevance'}, default 'date'
+        How the search results are ordered in output.
+    results_count: int, default: 100
+        required number of videos.
+
+    Returns : Pandas DataFrame containing a list of videos in channel.
+    '''
+    return search(query=None, channel_id=channel_id, order_by=order_by, date_start=since, date_end=to_date, required_results_count=results_count, scope="video")
 # -----------------------------------------------------------------------------------------
 
 
 def get_channel_data(channel_id):
+
+    '''
+    A function that returns a meta data of a specific channel id.
+
+    Parameters
+    ----------%s
+    channel_id : int
+        The channel we want to get meta data about.
+
+    Returns : Pandas DataFrame containing channel meta data.
+    '''
 
     request = youtube.channels().list(
         part="snippet,statistics",
@@ -203,27 +248,41 @@ def get_channel_data(channel_id):
 
 def get_video_top_level_comments(video_id, order_by='time', results_count=100):
 
-        request = youtube.commentThreads().list(
-        part="snippet,replies",
-        maxResults=results_count,
-        order=order_by,
-        videoId=video_id
-        )
-        response = request.execute()
+    '''
+    A function that returns a list of top level comments of a specific video id.
 
-        df = pd.DataFrame(response['items'])
-        df['id'] = df.snippet.apply(lambda x: x['topLevelComment']['id'])
-        df['comment'] = df.snippet.apply(lambda x: x['topLevelComment']['snippet'])
-        df['published_at'] = df.comment.apply(lambda x: x['publishedAt'])
-        df['updated_at'] = df.comment.apply(lambda x: x['updatedAt'])
-        df['text'] = df.comment.apply(lambda x: x['textDisplay'])
-        df['author'] = df.comment.apply(lambda x: x['authorDisplayName'])
-        df['likes'] = df.comment.apply(lambda x: x['likeCount'])
-        df['author_image'] = df.comment.apply(lambda x: x['authorProfileImageUrl'])
-        df['author_channel_id'] = df.comment.apply(lambda x: x['authorChannelId']['value'])
-        df['author_channel_url'] = df.comment.apply(lambda x: x['authorChannelUrl'])
+    Parameters
+    ----------%s
+    video_id : int
+        The video we want to scrape comments from.
+    order_by :  {'time', 'relevance'}, default 'relevance'
+        How the comments are listed.
+    results_count: int, default: 100 (youtube allow max 100)
+        required number of top level comments.
 
-        df = df.drop(columns=['kind', 'snippet', 'comment'])
+    Returns : Pandas DataFrame containing a list of top level comments of a video.
+    '''
+    request = youtube.commentThreads().list(
+    part="snippet,replies",
+    maxResults=results_count,
+    order=order_by,
+    videoId=video_id
+    )
+    response = request.execute()
 
-        return df
+    df = pd.DataFrame(response['items'])
+    df['id'] = df.snippet.apply(lambda x: x['topLevelComment']['id'])
+    df['comment'] = df.snippet.apply(lambda x: x['topLevelComment']['snippet'])
+    df['published_at'] = df.comment.apply(lambda x: x['publishedAt'])
+    df['updated_at'] = df.comment.apply(lambda x: x['updatedAt'])
+    df['text'] = df.comment.apply(lambda x: x['textDisplay'])
+    df['author'] = df.comment.apply(lambda x: x['authorDisplayName'])
+    df['likes'] = df.comment.apply(lambda x: x['likeCount'])
+    df['author_image'] = df.comment.apply(lambda x: x['authorProfileImageUrl'])
+    df['author_channel_id'] = df.comment.apply(lambda x: x['authorChannelId']['value'])
+    df['author_channel_url'] = df.comment.apply(lambda x: x['authorChannelUrl'])
+
+    df = df.drop(columns=['kind', 'snippet', 'comment'])
+
+    return df
 # -----------------------------------------------------------------------------------------
