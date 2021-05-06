@@ -1,10 +1,33 @@
+"""
+Youtube Scraper.
+By Ahmed Abousetta.
+
+https://github.com/ahmadabousetta/youtube-scraper
+---------
+A simple, yet powerful Python module to scrape youtube videos and channels.
+The scraped data is imported into a Pandas dataframe.
+
+The module is a soft wrapper for Youtube data api.
+https://developers.google.com/youtube/v3
+
+Installation instructions and sample scripts are in README.md file.
+
+"""
+# -----------------------------------------------------------------------------------------
+
+# import required libraries.
+
 import pandas as pd
 import os
 import googleapiclient.discovery
 import googleapiclient.errors
+# -----------------------------------------------------------------------------------------
+
 
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
+# -----------------------------------------------------------------------------------------
+
 
 api_service_name = "youtube"
 api_version = "v3"
@@ -14,10 +37,11 @@ with open("key.txt", "r") as f:
 
 youtube = googleapiclient.discovery.build(
         api_service_name, api_version, developerKey=API_key)
+# -----------------------------------------------------------------------------------------
+
 
 
 def search(query=None, channel_id=None, order_by='relevance', date_start="1970-01-01T00:00:00Z", date_end=None, required_results_count=10, scope="video,channel,playlist"):
-
 
     search_results_items = []
     page_token = None
@@ -74,7 +98,7 @@ def search(query=None, channel_id=None, order_by='relevance', date_start="1970-0
     df = df.drop(columns='snippet')
 
     return df
-
+# -----------------------------------------------------------------------------------------
 
 
 def get_video_data(video_id):
@@ -103,10 +127,12 @@ def get_video_data(video_id):
     df = df.drop(columns=['kind', 'snippet', 'contentDetails', 'statistics'])
 
     return df
+# -----------------------------------------------------------------------------------------
 
 
 def get_channel_videos(channel_id, since="1970-01-01T00:00:00Z", to_date=None, results_count=100):
     return search(query=None, channel_id=channel_id, order_by='date', date_start=since, date_end=to_date, required_results_count=results_count, scope="video")
+# -----------------------------------------------------------------------------------------
 
 
 def get_channel_data(channel_id):
@@ -132,6 +158,7 @@ def get_channel_data(channel_id):
     df = df.drop(columns=['kind', 'snippet', 'statistics'])
 
     return df
+# -----------------------------------------------------------------------------------------
 
 
 def get_video_top_level_comments(video_id, order_by='time', results_count=100):
@@ -159,3 +186,4 @@ def get_video_top_level_comments(video_id, order_by='time', results_count=100):
         df = df.drop(columns=['kind', 'snippet', 'comment'])
 
         return df
+# -----------------------------------------------------------------------------------------
