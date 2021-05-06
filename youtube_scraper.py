@@ -2,7 +2,7 @@
 Youtube Scraper.
 By Ahmed Abousetta.
 
-https://github.com/ahmadabousetta/youtube-scraper
+https://github.com/ahmadabousetta/youtube_scraper
 ---------
 A simple, yet powerful Python module to scrape youtube videos and channels.
 The scraped data is imported into a Pandas dataframe.
