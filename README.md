@@ -6,3 +6,4 @@ A Python library that provides some powerful functions to scrape youtube content
 2- In your work directory, put the file youtube_scraper.py.  
 3- In your code import youtube_scraper as yts (or however you want).  
 4- Use yts. to access the available functions.  
+5- 
